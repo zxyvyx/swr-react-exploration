@@ -1,0 +1,11 @@
+# vite
+vite.config.ts
+/src/vite-env.d.ts
+
+# build
+/dist
+/node_modules
+
+# tailwindcss
+tailwind.config.js
+postcss.config.js
