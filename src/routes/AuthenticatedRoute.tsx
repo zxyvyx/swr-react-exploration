@@ -10,6 +10,7 @@ const ProductsPage = lazy(() => import('../pages/ProductsPage'));
 const DetailProductPage = lazy(
   () => import('../pages/ProductsPage/DetailProductPage')
 );
+const NotFound404Page = lazy(() => import('../pages/NotFound404Page'));
 
 export default function AuthenticatedRoute() {
   return (
@@ -58,7 +59,16 @@ export default function AuthenticatedRoute() {
           />
         </Route>
       </Route>
-      <Route path='*' element={<div>Not Found</div>} />
+
+      {/* Exception Page */}
+      <Route
+        path='*'
+        element={
+          <Suspense fallback={<FullLoading isFullScreen />}>
+            <NotFound404Page />
+          </Suspense>
+        }
+      />
     </Routes>
   );
 }
