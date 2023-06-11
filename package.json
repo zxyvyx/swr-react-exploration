@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:development": "vite --mode development",
+    "dev:production": "vite --mode production",
     "build": "tsc && vite build",
+    "build:development": "tsc && vite build --mode development",
+    "build:production": "tsc && vite build --mode production",
     "preview": "vite preview",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
@@ -17,7 +21,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^4.9.0",
-    "react-router-dom": "^6.12.1"
+    "react-router-dom": "^6.12.1",
+    "swr": "^2.1.5"
   },
   "devDependencies": {
     "@types/react": "^18.0.37",
