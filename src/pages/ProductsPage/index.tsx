@@ -1,7 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import useSWR from 'swr';
 import { Link } from 'react-router-dom';
-import { MdSearch } from 'react-icons/md';
+import { MdFilterNone, MdSearch, MdSmsFailed } from 'react-icons/md';
 import Pagination from '../../components/Pagination';
+import { getProductsBySearch } from '../../libs/product';
+import FullLoading from '../../components/Loading/FullLoading';
+import { Product } from '../../libs/interfaces/Products';
+import { useDebounceString } from '../../hooks/useDebounceString';
 
 interface ProductListSectionProps {
   query: string;
@@ -9,70 +14,96 @@ interface ProductListSectionProps {
 
 function ProductListSection({ query }: ProductListSectionProps) {
   const [activePage, setActivePage] = useState(1);
-  const STATIC_PRODUCT_DATA = [
-    {
-      id: 1,
-      name: 'Nomad Pouch',
-      href: '#',
-      price: 50,
-      availability: 'White and Black',
-      imageSrc:
-        'https://tailwindui.com/img/ecommerce-images/category-page-07-product-01.jpg',
-      imageAlt:
-        'White fabric pouch with white zipper, black zipper pull, and black elastic loop.',
-    },
-    {
-      id: 2,
-      name: 'Zip Tote Basket',
-      href: '#',
-      price: 140,
-      availability: 'Washed Black',
-      imageSrc:
-        'https://tailwindui.com/img/ecommerce-images/category-page-07-product-02.jpg',
-      imageAlt:
-        'Front of tote bag with washed black canvas body, black straps, and tan leather handles and accents.',
-    },
-    {
-      id: 3,
-      name: 'Medium Stuff Satchel',
-      href: '#',
-      price: 220,
-      availability: 'Blue',
-      imageSrc:
-        'https://tailwindui.com/img/ecommerce-images/category-page-07-product-03.jpg',
-      imageAlt:
-        'Front of satchel with blue canvas body, black straps and handle, drawstring top, and front zipper pouch.',
-    },
-  ];
+  const LIMIT_PER_PAGE = 12;
+  const debouncedSearch = useDebounceString(query, 500);
+
+  useEffect(() => {
+    setActivePage(1);
+  }, [debouncedSearch]);
+
+  const {
+    data: productsData,
+    isLoading,
+    error,
+  } = useSWR(['products', activePage, debouncedSearch], () =>
+    getProductsBySearch(
+      LIMIT_PER_PAGE,
+      activePage > 1 ? activePage + LIMIT_PER_PAGE : activePage,
+      debouncedSearch
+    )
+  );
+
+  if (isLoading)
+    return (
+      <div className='flex flex-grow items-center justify-center h-full'>
+        <FullLoading />
+      </div>
+    );
+
+  if (error)
+    return (
+      <>
+        <div className='flex flex-col gap-2 items-center pt-10 justify-center text-center'>
+          <MdSmsFailed className='text-8xl text-red-200' />
+          <div className='font-bold text-2xl text-red-400'>
+            Failed to get data
+          </div>
+        </div>
+        <div className='sticky bottom-0 w-full bg-white pb-3 mt-auto'>
+          <Pagination
+            currentPage={
+              activePage < error?.response?.data?.total ? activePage : 1
+            }
+            totalPages={
+              error?.response?.data?.total
+                ? error.response.data.total / LIMIT_PER_PAGE
+                : 1
+            }
+            onPageChange={setActivePage}
+          />
+        </div>
+      </>
+    );
 
   return (
     <>
       <div className='grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-x-8 pt-3'>
-        {STATIC_PRODUCT_DATA.map((product) => (
-          <Link
-            key={product.id}
-            to={`/products/${product.id}`}
-            className='group text-sm'
-          >
-            <div className='w-full aspect-w-1 aspect-h-1 rounded-lg overflow-hidden bg-gray-100 group-hover:opacity-75'>
-              <img
-                src={product.imageSrc}
-                alt={product.imageAlt}
-                className='w-full h-full object-center object-cover'
-              />
+        {productsData?.products?.length ? (
+          productsData.products.map((product: Product) => (
+            <Link
+              key={product.id}
+              to={`/products/${product.id}`}
+              className='group text-sm'
+            >
+              <div className='w-full aspect-square rounded-lg overflow-hidden bg-gray-100 group-hover:opacity-75'>
+                <img
+                  src={product.thumbnail}
+                  alt={product.title}
+                  className='w-full h-full object-center object-cover'
+                />
+              </div>
+              <h3 className='mt-4 font-medium text-gray-900'>
+                {product.title}
+              </h3>
+              <p className='text-gray-500 italic'>{product.brand}</p>
+              <p className='mt-2 font-medium text-gray-900'>
+                Rp {product?.price?.toLocaleString('id-ID')}
+              </p>
+            </Link>
+          ))
+        ) : (
+          <div className='flex flex-col gap-2 items-center pt-10 justify-center text-center'>
+            <MdFilterNone className='text-8xl text-slate-200' />
+            <div className='font-bold text-2xl text-slate-400'>
+              No products found
             </div>
-            <h3 className='mt-4 font-medium text-gray-900'>{product.name}</h3>
-            <p className='text-gray-500 italic'>{product.availability}</p>
-            <p className='mt-2 font-medium text-gray-900'>
-              {product?.price?.toLocaleString('id-ID')}
-            </p>
-          </Link>
-        ))}
+          </div>
+        )}
       </div>
       <div className='sticky mt-auto bottom-0 bg-white w-full pb-3'>
         <Pagination
           currentPage={activePage}
-          totalPages={10}
+          totalPages={productsData.total / LIMIT_PER_PAGE}
           onPageChange={setActivePage}
         />
       </div>
