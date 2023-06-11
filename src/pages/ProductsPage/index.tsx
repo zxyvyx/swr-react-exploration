@@ -1,8 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { MdSearch } from 'react-icons/md';
 import Pagination from '../../components/Pagination';
 
-function ProductListSection() {
+interface ProductListSectionProps {
+  query: string;
+}
+
+function ProductListSection({ query }: ProductListSectionProps) {
   const [activePage, setActivePage] = useState(1);
   const STATIC_PRODUCT_DATA = [
     {
@@ -75,10 +80,46 @@ function ProductListSection() {
   );
 }
 
+interface SearchSectionProps {
+  query: string;
+  setQuery: (query: string) => void;
+}
+
+function SearchSection({
+  query,
+  setQuery = () => undefined,
+}: SearchSectionProps) {
+  return (
+    <div className='w-full'>
+      <label htmlFor='search' className='sr-only'>
+        Search projects
+      </label>
+      <div className='relative text-indigo-200 focus-within:text-gray-400'>
+        <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
+          <MdSearch className='h-5 w-5' aria-hidden='true' />
+        </div>
+        <input
+          id='search'
+          name='search'
+          className='block w-full bg-white border border-gray-300 rounded-md py-2 pl-10 pr-3 text-sm placeholder-gray-500 focus:outline-none focus:text-gray-900 focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'
+          placeholder='Search'
+          type='search'
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function ProductsPage() {
+  const [searchQuery, setSearchQuery] = useState('');
   return (
     <div className='max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 h-max flex flex-col gap-2 flex-1'>
-      <ProductListSection />
+      <div className='py-3 w-full'>
+        <SearchSection query={searchQuery} setQuery={setSearchQuery} />
+      </div>
+      <ProductListSection query={searchQuery} />
     </div>
   );
 }
